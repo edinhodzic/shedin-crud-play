@@ -2,7 +2,7 @@ package io.shedin.crud.play
 
 import io.shedin.crud.lib.CrudService
 import play.api.libs.json.JsError.toJson
-import play.api.libs.json.{Format, Reads}
+import play.api.libs.json.{Format, JsValue, Reads}
 import play.api.mvc.{Action, BodyParser, BodyParsers, Controller, _}
 
 import scala.concurrent.Future.successful
@@ -10,11 +10,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 abstract class CrudController[T]
 (crudService: CrudService[T])
-(implicit ec: ExecutionContext, format: Format[T]) extends Controller {
+(implicit ec: ExecutionContext, format: Format[T], manifest: Manifest[T]) extends Controller {
 
   def post = Action.async(parseJson[T]) { request =>
-    crudService.create(request.body) map { t =>
-      Created(format.writes(t)) // TODO add location header
+    crudService.create(request.body) map format.writes map { jsValue =>
+      Created(jsValue).withHeaders(deriveLocationHeader(request, jsValue))
     }
   }
 
@@ -28,7 +28,7 @@ abstract class CrudController[T]
   def put(id: String) = Action.async(parseJson[T]) { request =>
     // TODO enforce id on T
     crudService.update(id, request.body) map {
-      case Some(t) => NoContent
+      case Some(_) => NoContent
       case _ => InternalServerError // TODO ???
     }
   }
@@ -37,7 +37,7 @@ abstract class CrudController[T]
     // TODO enforce id on T
     // TODO do partial update here
     crudService.update(id, request.body) map {
-      case Some(t) => NoContent
+      case Some(_) => NoContent
       case _ => InternalServerError // TODO ???
     }
   }
@@ -46,7 +46,7 @@ abstract class CrudController[T]
     crudService.delete(id) map (deleted => if (deleted) NoContent else NotFound)
   }
 
-  private def parseJson[T](implicit reader: Reads[T], ec: ExecutionContext): BodyParser[T] = BodyParser("json reader") { request =>
+  private def parseJson[A](implicit reader: Reads[A], ec: ExecutionContext): BodyParser[A] = BodyParser("json reader") { request =>
     BodyParsers.parse.json(request) mapFuture {
       case Left(simpleResult) => successful(Left(simpleResult))
       case Right(jsValue) =>
@@ -57,5 +57,14 @@ abstract class CrudController[T]
         }
     }
   }
+
+  private def deriveLocationHeader(request: Request[T], jsValue: JsValue): (String, String) = {
+    val scheme = if (request.secure) "https://" else "http://"
+    ("Location", s"$scheme${request.host}/${simpleName(manifest)}/${(jsValue \ "id").as[String]}")
+  }
+
+  // TODO DRY
+  private def simpleName[A](manifest: Manifest[A]): String =
+    manifest.runtimeClass.getSimpleName.toLowerCase
 
 }
