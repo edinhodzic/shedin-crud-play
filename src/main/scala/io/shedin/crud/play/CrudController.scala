@@ -59,8 +59,7 @@ abstract class CrudController[T]
   }
 
   private def deriveLocationHeader(request: Request[T], jsValue: JsValue): (String, String) = {
-    val scheme = if (request.secure) "https://" else "http://"
-    ("Location", s"$scheme${request.host}/${simpleName(manifest)}/${(jsValue \ "id").as[String]}")
+    ("Location", s"/${simpleName(manifest)}/${(jsValue \ "id").as[String]}")
   }
 
   // TODO DRY
