@@ -29,7 +29,7 @@ abstract class CrudController[T]
     // TODO enforce id on T
     crudService.update(id, request.body) map {
       case Some(_) => NoContent
-      case _ => InternalServerError // TODO ???
+      case _ => NotFound
     }
   }
 
@@ -38,7 +38,7 @@ abstract class CrudController[T]
     // TODO do partial update here
     crudService.update(id, request.body) map {
       case Some(_) => NoContent
-      case _ => InternalServerError // TODO ???
+      case _ => NotFound
     }
   }
 
