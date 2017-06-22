@@ -3,14 +3,14 @@ package io.shedin.crud.play
 import io.shedin.crud.lib.CrudService
 import play.api.libs.json.JsError.toJson
 import play.api.libs.json.{Format, JsValue, Reads}
-import play.api.mvc.{Action, BodyParser, BodyParsers, Controller, _}
+import play.api.mvc.{BodyParser, _}
 
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class CrudController[T]
 (crudService: CrudService[T])
-(implicit ec: ExecutionContext, format: Format[T], manifest: Manifest[T]) extends Controller {
+(implicit ec: ExecutionContext, format: Format[T], manifest: Manifest[T]) extends InjectedController {
 
   def post = Action.async(parseJson[T]) { request =>
     crudService.create(request.body) map format.writes map { jsValue =>
@@ -47,7 +47,7 @@ abstract class CrudController[T]
   }
 
   private def parseJson[A](implicit reader: Reads[A], ec: ExecutionContext): BodyParser[A] = BodyParser("json reader") { request =>
-    BodyParsers.parse.json(request) mapFuture {
+    parse.json(request) mapFuture {
       case Left(simpleResult) => successful(Left(simpleResult))
       case Right(jsValue) =>
         jsValue.validate(reader) map { t =>

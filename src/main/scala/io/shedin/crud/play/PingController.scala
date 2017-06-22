@@ -7,7 +7,7 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PingController @Inject()(implicit ec: ExecutionContext) extends Controller {
+class PingController @Inject()(implicit ec: ExecutionContext) extends InjectedController {
 
   def ping = Action.async {
     Future {
