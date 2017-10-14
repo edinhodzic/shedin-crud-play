@@ -1,4 +1,6 @@
-# Background
+[![Build Status](https://travis-ci.org/edinhodzic/shedin-crud-play.svg?branch=master)](https://travis-ci.org/edinhodzic/shedin-crud-play)
+
+# About
 
     TODO write this up
 

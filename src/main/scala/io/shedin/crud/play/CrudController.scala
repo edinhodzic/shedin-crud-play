@@ -46,7 +46,7 @@ abstract class CrudController[T]
     crudService.delete(id) map (deleted => if (deleted) NoContent else NotFound)
   }
 
-  private def parseJson[A](implicit reader: Reads[A], ec: ExecutionContext): BodyParser[A] = BodyParser("json reader") { request =>
+  protected def parseJson[A](implicit reader: Reads[A], ec: ExecutionContext): BodyParser[A] = BodyParser("json reader") { request =>
     parse.json(request) mapFuture {
       case Left(simpleResult) => successful(Left(simpleResult))
       case Right(jsValue) =>
